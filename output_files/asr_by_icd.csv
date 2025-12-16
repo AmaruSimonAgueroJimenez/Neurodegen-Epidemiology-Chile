@@ -1,0 +1,97 @@
+year,icd_code,description,hosp_male,hosp_female,hosp_total,asr_male,asr_female,asr_total
+2019,F00,Dementia in Alzheimer disease,610,1174,1784,5.12,6.04,5.7
+2019,F01,Vascular dementia,660,571,1231,5.61,3.11,4.19
+2019,F02,Dementia in other diseases classified elsewhere,131,102,233,1.13,0.63,0.84
+2019,F03,Unspecified dementia,2604,3929,6533,21.91,20.46,21.12
+2019,F04,Organic amnesic syndrome,3,2,5,0.03,0.02,0.02
+2019,F06,Other mental disorders due to brain damage,706,782,1488,6.72,6.33,6.47
+2019,F07,Personality and behavioural disorders due to brain disease,179,220,399,1.73,2.02,1.87
+2019,G10,Huntington disease,11,23,34,0.1,0.19,0.15
+2019,G11,Hereditary ataxia,143,111,254,1.65,1.24,1.44
+2019,G12,Spinal muscular atrophy,338,239,577,3.67,2.44,3.04
+2019,G20,Parkinson disease,2988,2483,5471,25.44,14.9,19.2
+2019,G21,Secondary parkinsonism,116,99,215,1.07,0.72,0.88
+2019,G23,Other degenerative diseases of basal ganglia,11,12,23,0.13,0.11,0.12
+2019,G30,Alzheimer disease,2211,4237,6448,18.6,21.96,20.71
+2019,G31,Other degenerative diseases of nervous system,689,435,1124,6.24,3.12,4.54
+2019,G35,Multiple sclerosis,215,596,811,2.13,5.75,3.95
+2020,F00,Dementia in Alzheimer disease,549,922,1471,4.41,4.59,4.53
+2020,F01,Vascular dementia,613,504,1117,4.99,2.71,3.67
+2020,F02,Dementia in other diseases classified elsewhere,102,95,197,0.84,0.61,0.7
+2020,F03,Unspecified dementia,2359,3310,5669,19.06,16.73,17.75
+2020,F04,Organic amnesic syndrome,7,7,14,0.06,0.04,0.05
+2020,F06,Other mental disorders due to brain damage,617,635,1252,5.61,4.99,5.22
+2020,F07,Personality and behavioural disorders due to brain disease,121,117,238,1.14,1.11,1.11
+2020,G10,Huntington disease,11,21,32,0.1,0.17,0.13
+2020,G11,Hereditary ataxia,88,71,159,0.96,0.77,0.86
+2020,G12,Spinal muscular atrophy,252,234,486,2.65,2.3,2.46
+2020,G20,Parkinson disease,2244,1754,3998,18.3,10.09,13.5
+2020,G21,Secondary parkinsonism,93,60,153,0.84,0.46,0.64
+2020,G23,Other degenerative diseases of basal ganglia,10,7,17,0.12,0.06,0.09
+2020,G30,Alzheimer disease,1822,3156,4978,14.66,15.9,15.43
+2020,G31,Other degenerative diseases of nervous system,597,293,890,5.18,2.14,3.53
+2020,G35,Multiple sclerosis,174,399,573,1.67,3.76,2.72
+2021,F00,Dementia in Alzheimer disease,493,1000,1493,3.79,4.85,4.45
+2021,F01,Vascular dementia,534,484,1018,4.16,2.55,3.24
+2021,F02,Dementia in other diseases classified elsewhere,92,103,195,0.73,0.63,0.67
+2021,F03,Unspecified dementia,2345,3398,5743,18.14,16.68,17.35
+2021,F04,Organic amnesic syndrome,8,2,10,0.06,0.01,0.04
+2021,F06,Other mental disorders due to brain damage,588,707,1295,5.16,5.53,5.32
+2021,F07,Personality and behavioural disorders due to brain disease,133,122,255,1.24,1.04,1.14
+2021,G10,Huntington disease,13,20,33,0.11,0.16,0.14
+2021,G11,Hereditary ataxia,82,41,123,0.82,0.45,0.62
+2021,G12,Spinal muscular atrophy,279,222,501,2.79,1.99,2.38
+2021,G20,Parkinson disease,2376,1900,4276,18.57,10.73,13.99
+2021,G21,Secondary parkinsonism,96,66,162,0.84,0.54,0.68
+2021,G23,Other degenerative diseases of basal ganglia,8,4,12,0.08,0.05,0.07
+2021,G30,Alzheimer disease,1729,3276,5005,13.33,15.93,14.94
+2021,G31,Other degenerative diseases of nervous system,623,283,906,5.29,2.07,3.56
+2021,G35,Multiple sclerosis,192,394,586,1.82,3.69,2.76
+2022,F00,Dementia in Alzheimer disease,643,1284,1927,4.72,5.89,5.45
+2022,F01,Vascular dementia,665,534,1199,4.96,2.74,3.68
+2022,F02,Dementia in other diseases classified elsewhere,123,108,231,0.93,0.65,0.76
+2022,F03,Unspecified dementia,2775,3923,6698,20.52,18.57,19.46
+2022,F04,Organic amnesic syndrome,9,7,16,0.07,0.04,0.06
+2022,F06,Other mental disorders due to brain damage,748,821,1569,6.3,5.99,6.09
+2022,F07,Personality and behavioural disorders due to brain disease,116,100,216,1.08,0.93,1.01
+2022,G10,Huntington disease,13,33,46,0.11,0.27,0.19
+2022,G11,Hereditary ataxia,80,94,174,0.83,1.0,0.91
+2022,G12,Spinal muscular atrophy,370,294,664,3.57,2.48,3.01
+2022,G20,Parkinson disease,2784,2159,4943,20.8,11.62,15.42
+2022,G21,Secondary parkinsonism,98,85,183,0.85,0.66,0.75
+2022,G23,Other degenerative diseases of basal ganglia,8,8,16,0.08,0.08,0.08
+2022,G30,Alzheimer disease,2056,3882,5938,15.11,18.02,16.91
+2022,G31,Other degenerative diseases of nervous system,631,258,889,5.25,1.83,3.41
+2022,G35,Multiple sclerosis,288,515,803,2.67,4.7,3.69
+2023,F00,Dementia in Alzheimer disease,751,1331,2082,5.29,5.92,5.69
+2023,F01,Vascular dementia,840,671,1511,6.01,3.34,4.47
+2023,F02,Dementia in other diseases classified elsewhere,118,105,223,0.86,0.59,0.71
+2023,F03,Unspecified dementia,2921,4429,7350,20.69,20.33,20.57
+2023,F04,Organic amnesic syndrome,7,5,12,0.05,0.03,0.04
+2023,F06,Other mental disorders due to brain damage,840,931,1771,7.1,6.52,6.79
+2023,F07,Personality and behavioural disorders due to brain disease,131,145,276,1.15,1.23,1.19
+2023,G10,Huntington disease,16,29,45,0.13,0.23,0.18
+2023,G11,Hereditary ataxia,87,117,204,0.88,1.23,1.05
+2023,G12,Spinal muscular atrophy,377,273,650,3.53,2.36,2.93
+2023,G20,Parkinson disease,3197,2534,5731,22.95,13.22,17.31
+2023,G21,Secondary parkinsonism,107,102,209,0.92,0.78,0.84
+2023,G23,Other degenerative diseases of basal ganglia,7,18,25,0.06,0.17,0.11
+2023,G30,Alzheimer disease,2312,4230,6542,16.27,19.04,17.96
+2023,G31,Other degenerative diseases of nervous system,621,286,907,5.13,2.05,3.51
+2023,G35,Multiple sclerosis,316,608,924,3.02,5.6,4.31
+2024,F00,Dementia in Alzheimer disease,933,1688,2621,6.26,7.22,6.86
+2024,F01,Vascular dementia,928,692,1620,6.37,3.3,4.59
+2024,F02,Dementia in other diseases classified elsewhere,146,128,274,1.03,0.7,0.83
+2024,F03,Unspecified dementia,3342,4728,8070,22.65,20.8,21.65
+2024,F04,Organic amnesic syndrome,6,6,12,0.04,0.03,0.04
+2024,F06,Other mental disorders due to brain damage,932,1103,2035,7.67,7.58,7.6
+2024,F07,Personality and behavioural disorders due to brain disease,162,133,295,1.47,1.09,1.28
+2024,G10,Huntington disease,22,24,46,0.2,0.2,0.2
+2024,G11,Hereditary ataxia,122,98,220,1.26,0.95,1.1
+2024,G12,Spinal muscular atrophy,376,270,646,3.62,2.34,2.96
+2024,G20,Parkinson disease,3621,2830,6451,24.93,14.35,18.77
+2024,G21,Secondary parkinsonism,129,134,263,1.12,1.08,1.08
+2024,G23,Other degenerative diseases of basal ganglia,12,13,25,0.1,0.12,0.11
+2024,G30,Alzheimer disease,2690,4897,7587,18.07,20.98,19.88
+2024,G31,Other degenerative diseases of nervous system,556,399,955,4.43,2.66,3.49
+2024,G35,Multiple sclerosis,326,595,921,3.05,5.41,4.23

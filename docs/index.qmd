@@ -1,0 +1,32 @@
+---
+title: "Neurodegenerative Diseases"
+author:
+  - name: "Amaru Simón Agüero Jiménez"
+    email: "aaguero@miaundes.cl"
+    orcid: "0000-0001-7336-1833"
+date: "today"
+lang: en
+format:
+  html:
+    smooth-scroll: true
+    toc: true
+    toc-depth: 6
+    toc-location: right
+    number-sections: true
+    number-depth: 6
+    code-fold: true
+    bibliography: ref.bib
+    csl: apa-numeric-superscript.csl
+    fig-cap-location: bottom
+#    css: styles.css
+execute:
+  warning: false #que los chunks no arrojen mensajes de emergencia
+  message: false #que los chunks no arrojen mensajes
+  fig-width: 14 #ancho de las figuras en el documento
+  fig-height: 10 #alto de las figuras
+---
+
+# About repository
+
+- [Epidemiology](https://amarusimonaguerojimenez.github.io/Neurodegen-Epidemiology-Chile/Neurodegen-Epidemiology-Chile.html).
+
