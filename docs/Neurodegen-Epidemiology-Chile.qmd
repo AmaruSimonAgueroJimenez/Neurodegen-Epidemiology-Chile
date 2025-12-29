@@ -2537,10 +2537,10 @@ from splot.esda import moran_scatterplot, plot_moran
 from matplotlib.patches import Patch
 
 shp_candidates = [
-    os.path.join(data_path, 'ComunasGS.shp'),
-    '/mnt/user-data/uploads/ComunasGS.shp',
-    os.path.join(os.getcwd(), 'ComunasGS.shp'),
-    os.path.join(os.getcwd(), 'data', 'ComunasGS.shp')
+    os.path.join(data_path, 'comunas.shp'),
+    '/mnt/user-data/uploads/comunas.shp',
+    os.path.join(os.getcwd(), 'comunas.shp'),
+    os.path.join(os.getcwd(), 'data', 'comunas.shp')
 ]
 
 shp_path = None
@@ -2566,7 +2566,16 @@ def normalize_comuna_spatial(x):
     s = ''.join(c for c in s if c.isalnum() or c == ' ')
     return s.strip()
 
-gdf_gs['comuna_norm'] = gdf_gs['NOM_COMUNA'].apply(normalize_comuna_spatial)
+gdf_gs = gpd.read_file(shp_path)
+
+# 1) Filtrar a Región Metropolitana completa (codregion = 13)
+gdf_gs["codregion"] = pd.to_numeric(gdf_gs["codregion"], errors="coerce")
+gdf_gs = gdf_gs[gdf_gs["codregion"] == 13].copy()
+
+# 2) Normalizar comuna usando la columna correcta
+COMUNA_COL = "Comuna"
+gdf_gs["comuna_norm"] = gdf_gs[COMUNA_COL].apply(normalize_comuna_spatial)
+gdf_gs["comuna_name"] = gdf_gs[COMUNA_COL].astype(str)  # para tablas/anotaciones
 
 comuna_asr_f_copy = comuna_asr_f.copy()
 comuna_asr_f_copy['comuna_norm'] = comuna_asr_f_copy['comuna'].apply(normalize_comuna_spatial)
@@ -2824,17 +2833,17 @@ plt.show()
 #| tbl-cap: "Significant LISA Clusters - Comunas Detail"
 #| tbl-cap-location: bottom
 
-hotspots_f = gdf_fg[gdf_fg['cluster_f'] != 'No significativo'][['NOM_COMUNA', 'asr_f', 'cluster_f', 'lisa_p_f']].copy()
+hotspots_f = gdf_fg[gdf_fg['cluster_f'] != 'No significativo'][['Comuna', 'asr_f', 'cluster_f', 'lisa_p_f']].copy()
 hotspots_f.columns = ['Comuna', 'ASR F', 'Cluster F', 'P-value F']
 hotspots_f = hotspots_f.sort_values('ASR F', ascending=False)
 
-hotspots_g = gdf_fg[gdf_fg['cluster_g'] != 'No significativo'][['NOM_COMUNA', 'asr_g', 'cluster_g', 'lisa_p_g']].copy()
+hotspots_g = gdf_fg[gdf_fg['cluster_g'] != 'No significativo'][['Comuna', 'asr_g', 'cluster_g', 'lisa_p_g']].copy()
 hotspots_g.columns = ['Comuna', 'ASR G', 'Cluster G', 'P-value G']
 hotspots_g = hotspots_g.sort_values('ASR G', ascending=False)
 
 significant_clusters = gdf_fg[
     (gdf_fg['cluster_f'] != 'No significativo') | (gdf_fg['cluster_g'] != 'No significativo')
-][['NOM_COMUNA', 'asr_f', 'cluster_f', 'lisa_p_f', 'asr_g', 'cluster_g', 'lisa_p_g']].copy()
+][['Comuna', 'asr_f', 'cluster_f', 'lisa_p_f', 'asr_g', 'cluster_g', 'lisa_p_g']].copy()
 significant_clusters.columns = ['Comuna', 'ASR F', 'Cluster F', 'P-value F', 'ASR G', 'Cluster G', 'P-value G']
 significant_clusters = significant_clusters.sort_values('ASR F', ascending=False)
 
@@ -2858,7 +2867,7 @@ gdf_fg['sig_f'] = gdf_fg['lisa_p_f'] < 0.05
 gdf_fg.plot(column='sig_f', cmap='RdYlGn_r', ax=axes[0], edgecolor='gray', linewidth=0.5, legend=False)
 for idx, row in gdf_fg[gdf_fg['sig_f']].iterrows():
     centroid = row.geometry.centroid
-    axes[0].annotate(row['NOM_COMUNA'][:8], xy=(centroid.x, centroid.y), fontsize=6, ha='center', fontweight='bold')
+    axes[0].annotate(row['Comuna'][:8], xy=(centroid.x, centroid.y), fontsize=6, ha='center', fontweight='bold')
 axes[0].set_title('F-codes - Significant Clusters (p < 0.05)', fontsize=12, fontweight='bold')
 axes[0].set_axis_off()
 
@@ -2866,7 +2875,7 @@ gdf_fg['sig_g'] = gdf_fg['lisa_p_g'] < 0.05
 gdf_fg.plot(column='sig_g', cmap='RdYlGn_r', ax=axes[1], edgecolor='gray', linewidth=0.5, legend=False)
 for idx, row in gdf_fg[gdf_fg['sig_g']].iterrows():
     centroid = row.geometry.centroid
-    axes[1].annotate(row['NOM_COMUNA'][:8], xy=(centroid.x, centroid.y), fontsize=6, ha='center', fontweight='bold')
+    axes[1].annotate(row['Comuna'][:8], xy=(centroid.x, centroid.y), fontsize=6, ha='center', fontweight='bold')
 axes[1].set_title('G-codes - Significant Clusters (p < 0.05)', fontsize=12, fontweight='bold')
 axes[1].set_axis_off()
 

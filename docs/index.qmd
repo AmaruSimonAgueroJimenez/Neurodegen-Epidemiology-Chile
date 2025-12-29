@@ -30,3 +30,4 @@ execute:
 
 - [Epidemiology](https://amarusimonaguerojimenez.github.io/Neurodegen-Epidemiology-Chile/Neurodegen-Epidemiology-Chile.html).
 
+- [Epidemiology v2](https://amarusimonaguerojimenez.github.io/Neurodegen-Epidemiology-Chile/Neurodegen-Epidemiology-Chile2.html).

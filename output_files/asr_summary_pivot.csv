@@ -1,17 +1,11 @@
 icd_code,description,2019,2020,2021,2022,2023,2024
 F00,Dementia in Alzheimer disease,5.7,4.53,4.45,5.45,5.69,6.86
 F01,Vascular dementia,4.19,3.67,3.24,3.68,4.47,4.59
-F02,Dementia in other diseases classified elsewhere,0.84,0.7,0.67,0.76,0.71,0.83
+F02,Dementia in other diseases classified elsewhere,0.51,0.35,0.35,0.43,0.4,0.47
 F03,Unspecified dementia,21.12,17.75,17.35,19.46,20.57,21.65
 F04,Organic amnesic syndrome,0.02,0.05,0.04,0.06,0.04,0.04
-F06,Other mental disorders due to brain damage,6.47,5.22,5.32,6.09,6.79,7.6
-F07,Personality and behavioural disorders due to brain disease,1.87,1.11,1.14,1.01,1.19,1.28
-G10,Huntington disease,0.15,0.13,0.14,0.19,0.18,0.2
-G11,Hereditary ataxia,1.44,0.86,0.62,0.91,1.05,1.1
-G12,Spinal muscular atrophy,3.04,2.46,2.38,3.01,2.93,2.96
+F06.7,Mild cognitive disorder,2.62,2.33,2.35,2.99,3.48,3.9
 G20,Parkinson disease,19.2,13.5,13.99,15.42,17.31,18.77
-G21,Secondary parkinsonism,0.88,0.64,0.68,0.75,0.84,1.08
-G23,Other degenerative diseases of basal ganglia,0.12,0.09,0.07,0.08,0.11,0.11
 G30,Alzheimer disease,20.71,15.43,14.94,16.91,17.96,19.88
 G31,Other degenerative diseases of nervous system,4.54,3.53,3.56,3.41,3.51,3.49
-G35,Multiple sclerosis,3.95,2.72,2.76,3.69,4.31,4.23
+G32,Other degenerative disorders of nervous system in diseases classified elsewhere,0.35,0.51,0.67,0.65,0.64,0.79
