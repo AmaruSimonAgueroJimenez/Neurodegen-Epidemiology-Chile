@@ -1,8 +1,11 @@
 ---
 title: "Neurodegenerative Diseases"
 author:
+  - name: "Carolina Macarena Concha Ramírez"
+    email: "carconchar@miaundes.cl"
+    orcid: "0000-0002-5862-6247"
   - name: "Amaru Simón Agüero Jiménez"
-    email: "aaguero@miaundes.cl"
+    email: "a.agueroj@udd.cl"
     orcid: "0000-0001-7336-1833"
 date: "today"
 format:
@@ -3338,4 +3341,658 @@ if has_spatial_data:
         display(pd.DataFrame({'Message': ['No summary data available']}).style.hide(axis="index"))
 else:
     display(pd.DataFrame({'Message': ['Spatial analysis not available']}).style.hide(axis="index"))
+```
+
+
+
+\newpage
+
+## Air Quality Analysis - Metropolitan Region
+
+```{python}
+#| label: pollution-setup
+#| include: false
+
+# Load pollution data
+pollution_candidates = [
+    os.path.join(data_path, 'sinca_rm.xlsx'),
+    os.path.join(base_path, 'data', 'sinca_rm.xlsx'),
+    os.path.join(os.getcwd(), 'data', 'sinca_rm.xlsx'),
+    '/mnt/user-data/uploads/sinca_rm.xlsx'
+]
+
+pollution_file = None
+for candidate in pollution_candidates:
+    if os.path.exists(candidate):
+        pollution_file = candidate
+        break
+
+if pollution_file:
+    df_pollution = pd.read_excel(pollution_file)
+else:
+    df_pollution = pd.DataFrame()
+
+has_pollution_data = len(df_pollution) > 0
+
+if has_pollution_data:
+    # Mapping stations to comunas
+    STATION_TO_COMUNA = {
+        'cerrillos_I': 'Cerrillos',
+        'cerrillos_II': 'Cerrillos',
+        'cerro_navia': 'Cerro Navia',
+        'el_bosque': 'El Bosque',
+        'independencia': 'Independencia',
+        'la_florida': 'La Florida',
+        'la_pintana': 'La Pintana',
+        'las_condes': 'Las Condes',
+        'parque_ohiggins': 'Santiago',
+        'pudahuel': 'Pudahuel',
+        'puente_alto': 'Puente Alto',
+        'quilicura': 'Quilicura',
+        'quilicura_I': 'Quilicura',
+        'talagante': 'Talagante'
+    }
+
+    # Mapping stations to Health Services (Servicio de Salud)
+    STATION_TO_SERVICIO = {
+        'cerrillos_I': 'Metropolitano Central',
+        'cerrillos_II': 'Metropolitano Central',
+        'cerro_navia': 'Metropolitano Occidente',
+        'el_bosque': 'Metropolitano Sur',
+        'independencia': 'Metropolitano Norte',
+        'la_florida': 'Metropolitano Sur Oriente',
+        'la_pintana': 'Metropolitano Sur',
+        'las_condes': 'Metropolitano Oriente',
+        'parque_ohiggins': 'Metropolitano Central',
+        'pudahuel': 'Metropolitano Occidente',
+        'puente_alto': 'Metropolitano Sur Oriente',
+        'quilicura': 'Metropolitano Norte',
+        'quilicura_I': 'Metropolitano Norte',
+        'talagante': 'Metropolitano Occidente'
+    }
+
+    # Add comuna and servicio columns
+    df_pollution['comuna'] = df_pollution['name'].map(STATION_TO_COMUNA)
+    df_pollution['servicio_salud'] = df_pollution['name'].map(STATION_TO_SERVICIO)
+
+# List of pollutants
+POLLUTANTS = ['pm10', 'pm25', 'so2', 'no', 'no2', 'co', 'o3', 'nox']
+
+POLLUTANT_NAMES = {
+    'pm10': 'PM10 (µg/m³)',
+    'pm25': 'PM2.5 (µg/m³)',
+    'so2': 'SO₂ (ppb)',
+    'no': 'NO (ppb)',
+    'no2': 'NO₂ (ppb)',
+    'co': 'CO (ppm)',
+    'o3': 'O₃ (ppb)',
+    'nox': 'NOx (ppb)'
+}
+
+POLLUTANT_COLORS = {
+    'pm10': 'Reds',
+    'pm25': 'OrRd',
+    'so2': 'YlOrBr',
+    'no': 'Purples',
+    'no2': 'PuRd',
+    'co': 'Greys',
+    'o3': 'Blues',
+    'nox': 'BuPu'
+}
+```
+
+### Monitoring Stations Overview
+
+```{python}
+#| label: tbl-stations-mapping
+#| tbl-cap: "Air Quality Monitoring Stations - Mapping to Health Services"
+#| tbl-cap-location: bottom
+
+stations_df = df_pollution.groupby(['name', 'comuna', 'servicio_salud']).agg({
+    'year': ['min', 'max', 'count']
+}).reset_index()
+stations_df.columns = ['Station', 'Comuna', 'Health Service', 'First Year', 'Last Year', 'N Years']
+stations_df = stations_df.sort_values('Health Service')
+
+display(stations_df.style.hide(axis="index"))
+```
+
+```{python}
+#| label: tbl-pollutant-availability
+#| tbl-cap: "Data Availability by Pollutant and Health Service"
+#| tbl-cap-location: bottom
+
+availability = []
+for servicio in df_pollution['servicio_salud'].unique():
+    df_serv = df_pollution[df_pollution['servicio_salud'] == servicio]
+    row = {'Health Service': servicio}
+    for poll in POLLUTANTS:
+        n_valid = df_serv[poll].notna().sum()
+        row[poll.upper()] = n_valid
+    availability.append(row)
+
+avail_df = pd.DataFrame(availability)
+avail_df = avail_df.sort_values('Health Service')
+
+display(avail_df.style.background_gradient(cmap='YlGn', subset=[p.upper() for p in POLLUTANTS]).hide(axis="index"))
+```
+
+### Pollutant Means by Health Service
+
+```{python}
+#| label: calculate-servicio-means
+#| include: false
+
+def calculate_servicio_means(df, pollutants):
+    """
+    Calculate mean pollutant levels by Health Service.
+    If a service has multiple monitors in different comunas, calculate the mean.
+    """
+    results = []
+    
+    for servicio in df['servicio_salud'].unique():
+        df_serv = df[df['servicio_salud'] == servicio]
+        
+        # Count unique stations per year
+        stations_per_year = df_serv.groupby('year')['name'].nunique()
+        
+        row = {
+            'servicio_salud': servicio,
+            'n_stations': df_serv['name'].nunique(),
+            'n_comunas': df_serv['comuna'].nunique(),
+            'years_covered': df_serv['year'].nunique(),
+            'year_min': df_serv['year'].min(),
+            'year_max': df_serv['year'].max()
+        }
+        
+        for poll in pollutants:
+            # Calculate overall mean across all stations and years
+            row[f'{poll}_mean'] = df_serv[poll].mean()
+            row[f'{poll}_std'] = df_serv[poll].std()
+            row[f'{poll}_n'] = df_serv[poll].notna().sum()
+        
+        results.append(row)
+    
+    return pd.DataFrame(results)
+
+
+def calculate_servicio_yearly_means(df, pollutants):
+    """
+    Calculate yearly mean pollutant levels by Health Service.
+    Averages across stations within the same service for each year.
+    """
+    # First average across stations within each servicio and year
+    yearly_means = df.groupby(['servicio_salud', 'year'])[pollutants].mean().reset_index()
+    
+    return yearly_means
+
+
+# Calculate summary statistics
+servicio_summary = calculate_servicio_means(df_pollution, POLLUTANTS)
+servicio_yearly = calculate_servicio_yearly_means(df_pollution, POLLUTANTS)
+```
+
+```{python}
+#| label: tbl-servicio-summary
+#| tbl-cap: "Pollutant Summary Statistics by Health Service (All Years)"
+#| tbl-cap-location: bottom
+
+summary_display = servicio_summary[['servicio_salud', 'n_stations', 'n_comunas', 'years_covered']].copy()
+summary_display.columns = ['Health Service', 'Stations', 'Comunas', 'Years']
+
+for poll in ['pm10', 'pm25', 'co', 'o3']:
+    summary_display[POLLUTANT_NAMES[poll].split()[0]] = servicio_summary[f'{poll}_mean'].round(2)
+
+summary_display = summary_display.sort_values('Health Service')
+
+display(summary_display.style.format({
+    'PM10': '{:.1f}',
+    'PM2.5': '{:.1f}',
+    'CO': '{:.2f}',
+    'O₃': '{:.1f}'
+}, na_rep='-').background_gradient(cmap='YlOrRd', subset=['PM10', 'PM2.5']).hide(axis="index"))
+```
+
+\newpage
+
+### Temporal Analysis - Pollutant Trends
+
+```{python}
+#| label: fig-temporal-pm
+#| fig-cap: "Particulate Matter Trends by Health Service (1998-2025)"
+#| fig-width: 16
+#| fig-height: 10
+
+fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+
+servicios = servicio_yearly['servicio_salud'].unique()
+colors = plt.cm.tab10(np.linspace(0, 1, len(servicios)))
+color_map = dict(zip(servicios, colors))
+
+# PM10 trends
+ax1 = axes[0, 0]
+for servicio in servicios:
+    df_s = servicio_yearly[servicio_yearly['servicio_salud'] == servicio]
+    df_s = df_s.dropna(subset=['pm10'])
+    if len(df_s) > 0:
+        ax1.plot(df_s['year'], df_s['pm10'], marker='o', linewidth=2, markersize=4, 
+                 label=servicio, color=color_map[servicio])
+ax1.set_xlabel('Year')
+ax1.set_ylabel('PM10 (µg/m³)')
+ax1.set_title('PM10 Annual Mean by Health Service', fontweight='bold')
+ax1.legend(loc='upper right', fontsize=8)
+ax1.grid(True, alpha=0.3)
+
+# PM2.5 trends
+ax2 = axes[0, 1]
+for servicio in servicios:
+    df_s = servicio_yearly[servicio_yearly['servicio_salud'] == servicio]
+    df_s = df_s.dropna(subset=['pm25'])
+    if len(df_s) > 0:
+        ax2.plot(df_s['year'], df_s['pm25'], marker='o', linewidth=2, markersize=4, 
+                 label=servicio, color=color_map[servicio])
+ax2.set_xlabel('Year')
+ax2.set_ylabel('PM2.5 (µg/m³)')
+ax2.set_title('PM2.5 Annual Mean by Health Service', fontweight='bold')
+ax2.legend(loc='upper right', fontsize=8)
+ax2.grid(True, alpha=0.3)
+
+# Overall PM10 trend with confidence interval
+ax3 = axes[1, 0]
+pm10_overall = df_pollution.groupby('year')['pm10'].agg(['mean', 'std', 'count']).reset_index()
+pm10_overall['se'] = pm10_overall['std'] / np.sqrt(pm10_overall['count'])
+ax3.fill_between(pm10_overall['year'], 
+                  pm10_overall['mean'] - 1.96*pm10_overall['se'],
+                  pm10_overall['mean'] + 1.96*pm10_overall['se'],
+                  alpha=0.3, color='steelblue')
+ax3.plot(pm10_overall['year'], pm10_overall['mean'], marker='o', linewidth=2, 
+         color='steelblue', label='Mean ± 95% CI')
+ax3.set_xlabel('Year')
+ax3.set_ylabel('PM10 (µg/m³)')
+ax3.set_title('Overall PM10 Trend - Metropolitan Region', fontweight='bold')
+ax3.legend()
+ax3.grid(True, alpha=0.3)
+
+# Overall PM2.5 trend with confidence interval
+ax4 = axes[1, 1]
+pm25_overall = df_pollution.groupby('year')['pm25'].agg(['mean', 'std', 'count']).reset_index()
+pm25_overall['se'] = pm25_overall['std'] / np.sqrt(pm25_overall['count'])
+ax4.fill_between(pm25_overall['year'], 
+                  pm25_overall['mean'] - 1.96*pm25_overall['se'],
+                  pm25_overall['mean'] + 1.96*pm25_overall['se'],
+                  alpha=0.3, color='coral')
+ax4.plot(pm25_overall['year'], pm25_overall['mean'], marker='o', linewidth=2, 
+         color='coral', label='Mean ± 95% CI')
+ax4.set_xlabel('Year')
+ax4.set_ylabel('PM2.5 (µg/m³)')
+ax4.set_title('Overall PM2.5 Trend - Metropolitan Region', fontweight='bold')
+ax4.legend()
+ax4.grid(True, alpha=0.3)
+
+plt.tight_layout()
+save_figure(fig, 'pollution_pm_trends.png')
+plt.show()
+```
+
+```{python}
+#| label: fig-temporal-gases
+#| fig-cap: "Gas Pollutant Trends by Health Service (1998-2025)"
+#| fig-width: 16
+#| fig-height: 12
+
+fig, axes = plt.subplots(2, 3, figsize=(16, 12))
+
+gases = ['co', 'o3', 'no2', 'so2', 'no', 'nox']
+gas_titles = ['CO (ppm)', 'O₃ (ppb)', 'NO₂ (ppb)', 'SO₂ (ppb)', 'NO (ppb)', 'NOx (ppb)']
+
+for idx, (gas, title) in enumerate(zip(gases, gas_titles)):
+    ax = axes.flatten()[idx]
+    for servicio in servicios:
+        df_s = servicio_yearly[servicio_yearly['servicio_salud'] == servicio]
+        df_s = df_s.dropna(subset=[gas])
+        if len(df_s) > 0:
+            ax.plot(df_s['year'], df_s[gas], marker='o', linewidth=1.5, markersize=3, 
+                    label=servicio, color=color_map[servicio], alpha=0.8)
+    ax.set_xlabel('Year')
+    ax.set_ylabel(title)
+    ax.set_title(f'{title} Annual Mean', fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    if idx == 0:
+        ax.legend(loc='upper right', fontsize=7)
+
+plt.tight_layout()
+save_figure(fig, 'pollution_gas_trends.png')
+plt.show()
+```
+
+```{python}
+#| label: fig-heatmap-pollution
+#| fig-cap: "Pollutant Levels Heatmap by Health Service and Year"
+#| fig-width: 16
+#| fig-height: 10
+
+fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+
+pollutants_heatmap = ['pm10', 'pm25', 'co', 'o3']
+titles_heatmap = ['PM10 (µg/m³)', 'PM2.5 (µg/m³)', 'CO (ppm)', 'O₃ (ppb)']
+cmaps_heatmap = ['Reds', 'OrRd', 'Greys', 'Blues']
+
+for idx, (poll, title, cmap) in enumerate(zip(pollutants_heatmap, titles_heatmap, cmaps_heatmap)):
+    ax = axes.flatten()[idx]
+    
+    pivot_data = servicio_yearly.pivot_table(
+        index='servicio_salud',
+        columns='year',
+        values=poll,
+        aggfunc='mean'
+    )
+    
+    # Filter years with data
+    pivot_data = pivot_data.dropna(axis=1, how='all')
+    
+    if pivot_data.shape[1] > 0:
+        sns.heatmap(pivot_data, annot=True, fmt='.1f', cmap=cmap, ax=ax,
+                    cbar_kws={'label': title}, annot_kws={'size': 7})
+        ax.set_title(f'{title} by Health Service and Year', fontweight='bold')
+        ax.set_xlabel('Year')
+        ax.set_ylabel('Health Service')
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+    else:
+        ax.text(0.5, 0.5, f'No {poll.upper()} data available', ha='center', va='center')
+        ax.set_title(title, fontweight='bold')
+
+plt.tight_layout()
+save_figure(fig, 'pollution_heatmaps.png')
+plt.show()
+```
+
+\newpage
+
+### Metropolitan Region Maps - Pollutant Distribution
+
+```{python}
+#| label: prepare-pollution-spatial
+#| include: false
+
+# Calculate overall means by Health Service (across all years)
+servicio_means = servicio_summary.copy()
+servicio_means['servicio_norm'] = servicio_means['servicio_salud'].str.upper().str.strip()
+
+# Mapping for joining with shapefile
+SERVICIO_TO_COMUNAS = {
+    'Metropolitano Norte': ['Conchalí', 'Huechuraba', 'Independencia', 'Quilicura', 'Recoleta', 'Colina', 'Lampa', 'Tiltil'],
+    'Metropolitano Occidente': ['Cerro Navia', 'Lo Prado', 'Pudahuel', 'Quinta Normal', 'Renca', 'Melipilla', 'Alhué', 'Curacaví', 'María Pinto', 'San Pedro', 'Talagante', 'El Monte', 'Isla de Maipo', 'Padre Hurtado', 'Peñaflor'],
+    'Metropolitano Central': ['Cerrillos', 'Estación Central', 'Maipú', 'Pedro Aguirre Cerda', 'Santiago'],
+    'Metropolitano Oriente': ['La Reina', 'Las Condes', 'Lo Barnechea', 'Macul', 'Ñuñoa', 'Peñalolén', 'Providencia', 'Vitacura'],
+    'Metropolitano Sur': ['El Bosque', 'La Cisterna', 'La Granja', 'La Pintana', 'Lo Espejo', 'San Bernardo', 'San Joaquín', 'San Miguel', 'San Ramón', 'Buin', 'Calera de Tango', 'Paine'],
+    'Metropolitano Sur Oriente': ['La Florida', 'Puente Alto', 'Pirque', 'San José de Maipo']
+}
+
+# Create reverse mapping: comuna -> servicio
+COMUNA_TO_SERVICIO = {}
+for serv, comunas in SERVICIO_TO_COMUNAS.items():
+    for comuna in comunas:
+        COMUNA_TO_SERVICIO[comuna.upper()] = serv
+
+# Prepare GeoDataFrame for pollution mapping
+gdf_pollution = None
+if has_spatial_data and gdf_gs is not None:
+    gdf_pollution = gdf_gs.copy()
+    gdf_pollution['comuna_upper'] = gdf_pollution['Comuna'].str.upper()
+    gdf_pollution['servicio_salud'] = gdf_pollution['comuna_upper'].map(COMUNA_TO_SERVICIO)
+    
+    # Merge pollution data
+    for poll in POLLUTANTS:
+        mean_col = f'{poll}_mean'
+        serv_data = servicio_means[['servicio_salud', mean_col]].copy()
+        gdf_pollution = gdf_pollution.merge(
+            serv_data,
+            on='servicio_salud',
+            how='left'
+        )
+```
+
+```{python}
+#| label: fig-pollution-maps-pm
+#| fig-cap: "Particulate Matter Distribution by Health Service - Metropolitan Region"
+#| fig-width: 16
+#| fig-height: 8
+
+if gdf_pollution is not None:
+    fig, axes = plt.subplots(1, 2, figsize=(16, 8))
+    
+    # PM10 map
+    ax1 = axes[0]
+    gdf_pollution.plot(column='pm10_mean', cmap='Reds', linewidth=0.5, ax=ax1, edgecolor='0.5',
+                       legend=True, legend_kwds={'label': 'PM10 (µg/m³)', 'shrink': 0.6},
+                       missing_kwds={'color': 'lightgrey', 'label': 'No data'})
+    ax1.set_title('PM10 Mean Concentration\nby Health Service Area', fontweight='bold', fontsize=12)
+    ax1.set_axis_off()
+    
+    # Add service labels
+    for serv in gdf_pollution['servicio_salud'].dropna().unique():
+        gdf_serv = gdf_pollution[gdf_pollution['servicio_salud'] == serv]
+        if len(gdf_serv) > 0:
+            centroid = gdf_serv.dissolve().centroid.iloc[0]
+            val = gdf_serv['pm10_mean'].iloc[0]
+            if pd.notna(val):
+                ax1.annotate(f'{val:.1f}', xy=(centroid.x, centroid.y), fontsize=9, 
+                            ha='center', va='center', fontweight='bold',
+                            bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+    
+    # PM2.5 map
+    ax2 = axes[1]
+    gdf_pollution.plot(column='pm25_mean', cmap='OrRd', linewidth=0.5, ax=ax2, edgecolor='0.5',
+                       legend=True, legend_kwds={'label': 'PM2.5 (µg/m³)', 'shrink': 0.6},
+                       missing_kwds={'color': 'lightgrey', 'label': 'No data'})
+    ax2.set_title('PM2.5 Mean Concentration\nby Health Service Area', fontweight='bold', fontsize=12)
+    ax2.set_axis_off()
+    
+    for serv in gdf_pollution['servicio_salud'].dropna().unique():
+        gdf_serv = gdf_pollution[gdf_pollution['servicio_salud'] == serv]
+        if len(gdf_serv) > 0:
+            centroid = gdf_serv.dissolve().centroid.iloc[0]
+            val = gdf_serv['pm25_mean'].iloc[0]
+            if pd.notna(val):
+                ax2.annotate(f'{val:.1f}', xy=(centroid.x, centroid.y), fontsize=9, 
+                            ha='center', va='center', fontweight='bold',
+                            bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+    
+    plt.suptitle('Particulate Matter - Metropolitan Region (All Years Mean)', fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    save_figure(fig, 'pollution_maps_pm.png')
+    plt.show()
+else:
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Spatial data not available', ha='center', va='center', fontsize=14)
+    ax.set_axis_off()
+    plt.show()
+```
+
+```{python}
+#| label: fig-pollution-maps-gases
+#| fig-cap: "Gas Pollutant Distribution by Health Service - Metropolitan Region"
+#| fig-width: 16
+#| fig-height: 12
+
+if gdf_pollution is not None:
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    
+    gas_maps = [
+        ('co_mean', 'Greys', 'CO (ppm)'),
+        ('o3_mean', 'Blues', 'O₃ (ppb)'),
+        ('no2_mean', 'PuRd', 'NO₂ (ppb)'),
+        ('so2_mean', 'YlOrBr', 'SO₂ (ppb)')
+    ]
+    
+    for idx, (col, cmap, label) in enumerate(gas_maps):
+        ax = axes.flatten()[idx]
+        
+        if col in gdf_pollution.columns and gdf_pollution[col].notna().any():
+            gdf_pollution.plot(column=col, cmap=cmap, linewidth=0.5, ax=ax, edgecolor='0.5',
+                               legend=True, legend_kwds={'label': label, 'shrink': 0.5},
+                               missing_kwds={'color': 'lightgrey'})
+            
+            for serv in gdf_pollution['servicio_salud'].dropna().unique():
+                gdf_serv = gdf_pollution[gdf_pollution['servicio_salud'] == serv]
+                if len(gdf_serv) > 0:
+                    centroid = gdf_serv.dissolve().centroid.iloc[0]
+                    val = gdf_serv[col].iloc[0]
+                    if pd.notna(val):
+                        ax.annotate(f'{val:.2f}' if 'co' in col else f'{val:.1f}', 
+                                   xy=(centroid.x, centroid.y), fontsize=8, 
+                                   ha='center', va='center', fontweight='bold',
+                                   bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+        else:
+            gdf_pollution.plot(ax=ax, color='lightgrey', edgecolor='0.5', linewidth=0.5)
+            ax.text(0.5, 0.5, f'No {label} data', ha='center', va='center', 
+                   transform=ax.transAxes, fontsize=12)
+        
+        ax.set_title(f'{label} Mean Concentration', fontweight='bold', fontsize=11)
+        ax.set_axis_off()
+    
+    plt.suptitle('Gas Pollutants - Metropolitan Region (All Years Mean)', fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    save_figure(fig, 'pollution_maps_gases.png')
+    plt.show()
+else:
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Spatial data not available', ha='center', va='center', fontsize=14)
+    ax.set_axis_off()
+    plt.show()
+```
+
+```{python}
+#| label: fig-all-pollutants-map
+#| fig-cap: "All Pollutants - Health Service Area Maps"
+#| fig-width: 18
+#| fig-height: 12
+
+if gdf_pollution is not None:
+    fig, axes = plt.subplots(2, 4, figsize=(18, 12))
+    
+    all_pollutants = [
+        ('pm10_mean', 'Reds', 'PM10'),
+        ('pm25_mean', 'OrRd', 'PM2.5'),
+        ('co_mean', 'Greys', 'CO'),
+        ('o3_mean', 'Blues', 'O₃'),
+        ('no_mean', 'Purples', 'NO'),
+        ('no2_mean', 'PuRd', 'NO₂'),
+        ('so2_mean', 'YlOrBr', 'SO₂'),
+        ('nox_mean', 'BuPu', 'NOx')
+    ]
+    
+    for idx, (col, cmap, label) in enumerate(all_pollutants):
+        ax = axes.flatten()[idx]
+        
+        if col in gdf_pollution.columns and gdf_pollution[col].notna().any():
+            gdf_pollution.plot(column=col, cmap=cmap, linewidth=0.3, ax=ax, edgecolor='0.3',
+                               legend=True, legend_kwds={'shrink': 0.4, 'pad': 0.01},
+                               missing_kwds={'color': 'lightgrey'})
+        else:
+            gdf_pollution.plot(ax=ax, color='lightgrey', edgecolor='0.3', linewidth=0.3)
+        
+        ax.set_title(label, fontweight='bold', fontsize=11)
+        ax.set_axis_off()
+    
+    plt.suptitle('All Pollutants by Health Service Area - Metropolitan Region\n(Mean Concentrations 1998-2025)', 
+                 fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    save_figure(fig, 'pollution_all_maps.png')
+    plt.show()
+else:
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Spatial data not available', ha='center', va='center', fontsize=14)
+    ax.set_axis_off()
+    plt.show()
+```
+
+\newpage
+
+### Pollution Summary Statistics
+
+```{python}
+#| label: tbl-pollution-summary-complete
+#| tbl-cap: "Complete Pollution Summary by Health Service"
+#| tbl-cap-location: bottom
+
+summary_complete = servicio_means[['servicio_salud', 'n_stations', 'n_comunas', 
+                                    'year_min', 'year_max', 'years_covered']].copy()
+
+for poll in POLLUTANTS:
+    summary_complete[poll.upper()] = servicio_means[f'{poll}_mean'].round(2)
+
+summary_complete.columns = ['Health Service', 'Stations', 'Comunas', 'First Year', 
+                            'Last Year', 'Years'] + [p.upper() for p in POLLUTANTS]
+
+display(summary_complete.style.format({
+    'PM10': '{:.1f}', 'PM25': '{:.1f}', 'SO2': '{:.1f}', 
+    'NO': '{:.1f}', 'NO2': '{:.1f}', 'CO': '{:.2f}', 
+    'O3': '{:.1f}', 'NOX': '{:.1f}'
+}, na_rep='-').background_gradient(cmap='YlOrRd', subset=['PM10', 'PM25']).hide(axis="index"))
+```
+
+```{python}
+#| label: fig-pollution-boxplots
+#| fig-cap: "Pollutant Distribution by Health Service (All Years)"
+#| fig-width: 16
+#| fig-height: 10
+
+fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+
+pollutants_box = ['pm10', 'pm25', 'co', 'o3']
+titles_box = ['PM10 (µg/m³)', 'PM2.5 (µg/m³)', 'CO (ppm)', 'O₃ (ppb)']
+
+for idx, (poll, title) in enumerate(zip(pollutants_box, titles_box)):
+    ax = axes.flatten()[idx]
+    
+    data_box = df_pollution[['servicio_salud', poll]].dropna()
+    
+    if len(data_box) > 0:
+        order = data_box.groupby('servicio_salud')[poll].median().sort_values(ascending=False).index.tolist()
+        sns.boxplot(data=data_box, x='servicio_salud', y=poll, ax=ax, order=order, palette='Set2')
+        ax.set_xlabel('Health Service')
+        ax.set_ylabel(title)
+        ax.set_title(f'{title} Distribution by Health Service', fontweight='bold')
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+        ax.grid(True, alpha=0.3, axis='y')
+    else:
+        ax.text(0.5, 0.5, f'No {poll.upper()} data', ha='center', va='center')
+        ax.set_title(title, fontweight='bold')
+
+plt.tight_layout()
+save_figure(fig, 'pollution_boxplots.png')
+plt.show()
+```
+
+```{python}
+#| label: tbl-pollution-trends
+#| tbl-cap: "Pollutant Trends - First vs Last 5 Years Comparison"
+#| tbl-cap-location: bottom
+
+# Compare first 5 years vs last 5 years
+first_years = df_pollution[df_pollution['year'] <= df_pollution['year'].min() + 4]
+last_years = df_pollution[df_pollution['year'] >= df_pollution['year'].max() - 4]
+
+trend_data = []
+for poll in ['pm10', 'pm25', 'co', 'o3']:
+    first_mean = first_years[poll].mean()
+    last_mean = last_years[poll].mean()
+    change = ((last_mean - first_mean) / first_mean * 100) if pd.notna(first_mean) and first_mean != 0 else None
+    
+    trend_data.append({
+        'Pollutant': POLLUTANT_NAMES[poll],
+        f'Mean {int(df_pollution["year"].min())}-{int(df_pollution["year"].min()+4)}': first_mean,
+        f'Mean {int(df_pollution["year"].max()-4)}-{int(df_pollution["year"].max())}': last_mean,
+        'Change (%)': change,
+        'Trend': '↓ Decrease' if change and change < -5 else ('↑ Increase' if change and change > 5 else '→ Stable')
+    })
+
+trend_df = pd.DataFrame(trend_data)
+
+display(trend_df.style.format({
+    f'Mean {int(df_pollution["year"].min())}-{int(df_pollution["year"].min()+4)}': '{:.2f}',
+    f'Mean {int(df_pollution["year"].max()-4)}-{int(df_pollution["year"].max())}': '{:.2f}',
+    'Change (%)': '{:.1f}'
+}, na_rep='-').hide(axis="index"))
 ```

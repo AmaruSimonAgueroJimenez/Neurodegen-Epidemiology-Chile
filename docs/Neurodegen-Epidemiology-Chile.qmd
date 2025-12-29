@@ -1,8 +1,11 @@
 ---
 title: "Neurodegenerative Diseases"
 author:
+  - name: "Carolina Macarena Concha Ramírez"
+    email: "carconchar@miaundes.cl"
+    orcid: "0000-0002-5862-6247"
   - name: "Amaru Simón Agüero Jiménez"
-    email: "aaguero@miaundes.cl"
+    email: "a.agueroj@udd.cl"
     orcid: "0000-0001-7336-1833"
 date: "today"
 format:
